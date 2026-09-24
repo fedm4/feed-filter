@@ -57,7 +57,6 @@ class Settings(BaseSettings):
     # which measured better than pinning. Set it only to force one checkpoint.
     laya_model: str = ""
     laya_api_key: str | None = None
-    laya_batch_size: int = Field(default=16, gt=0)
     laya_timeout_s: int = Field(default=60, gt=0)
 
     poll_minutes: int = Field(default=30, gt=0)

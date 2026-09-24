@@ -579,6 +579,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic-settings" },
+    { name = "pyyaml" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -595,6 +596,7 @@ requires-dist = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
+    { name = "pyyaml", specifier = ">=6.0.1" },
     { name = "sqlalchemy", specifier = ">=2.0.54" },
     { name = "uvicorn", extras = ["standard"] },
 ]

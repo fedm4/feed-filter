@@ -17,6 +17,7 @@ __pycache__/
 tasks/
 data/
 config.yaml
+catalog.yaml
 *.db
 .laya-venv/
 models/

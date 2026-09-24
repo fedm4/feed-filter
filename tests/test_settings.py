@@ -42,7 +42,7 @@ def test_timezone_resolves_to_a_zoneinfo() -> None:
         ("FF_OPINION_POLICY", "silently_drop"),
         ("FF_TZ", "Mars/Olympus"),
         ("FF_DIGEST_TIMES", "half past eight"),
-        ("FF_LAYA_BATCH_SIZE", "0"),
+        ("FF_LAYA_TIMEOUT_S", "0"),
         ("FF_PORT", "70000"),
     ],
 )

@@ -12,6 +12,7 @@ dev = [
     "pr-agent",
     "pytest",
     "httpx",
+    "ruff",
 ]
 
 [build-system]
@@ -20,3 +21,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/feedfilter"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

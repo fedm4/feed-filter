@@ -1,0 +1,19 @@
+[Unit]
+Description=Laya decision model (feed-filter)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=LAYA_DEVICE=@DEVICE@
+Environment=LAYA_PRELOAD=1
+Environment=LAYA_MODELS=@MODELS@
+Environment=LAYA_HOST=@BIND@
+Environment=LAYA_PORT=@PORT@
+Environment=LAYA_THREADS=@THREADS@
+ExecStart=@VENV@/bin/laya-serve
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

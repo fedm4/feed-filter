@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.14.7"
 dependencies = [
     "fastapi",
+    "httpx",
     "pydantic-settings>=2.14.2",
     "uvicorn[standard]",
 ]
@@ -12,7 +13,6 @@ dependencies = [
 dev = [
     "pr-agent",
     "pytest",
-    "httpx",
     "ruff",
 ]
 

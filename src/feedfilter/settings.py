@@ -53,7 +53,9 @@ class Settings(BaseSettings):
     ui_lang: str = "es"
 
     laya_base_url: str = "http://host.docker.internal:8000"
-    laya_model: str = "convaiinnovations/laya-multilingual"
+    # Empty means auto-route: the server picks a checkpoint from the detected language,
+    # which measured better than pinning. Set it only to force one checkpoint.
+    laya_model: str = ""
     laya_api_key: str | None = None
     laya_batch_size: int = Field(default=16, gt=0)
     laya_timeout_s: int = Field(default=60, gt=0)

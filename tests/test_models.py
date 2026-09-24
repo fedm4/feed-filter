@@ -9,52 +9,20 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, StatementError
-from sqlalchemy.orm import Session
 
-from feedfilter.db import create_db_engine, create_session_factory, session_scope
-from feedfilter.models import Base, Item, Label, Source, Verdict, utcnow
-
-
-@pytest.fixture
-def factory():
-    engine = create_db_engine(path=":memory:")
-    Base.metadata.create_all(engine)
-    return create_session_factory(engine)
-
-
-def make_source(session: Session, **overrides) -> Source:
-    source = Source(
-        **{"name": "Example", "url": "https://example.com/feed", "lang": "en", **overrides}
-    )
-    session.add(source)
-    session.flush()
-    return source
-
-
-def make_item(session: Session, source: Source, **overrides) -> Item:
-    item = Item(
-        **{
-            "source_id": source.id,
-            "url": "https://example.com/a?utm_source=rss",
-            "canonical_url": "https://example.com/a",
-            "url_hash": "hash-a",
-            "title": "A headline",
-            **overrides,
-        }
-    )
-    session.add(item)
-    session.flush()
-    return item
+from conftest import make_item, make_label, make_source, make_verdict
+from feedfilter.db import session_scope
+from feedfilter.models import Item, Label, Source, Verdict, utcnow
 
 
 def test_source_round_trip(factory) -> None:
     with session_scope(factory) as session:
-        make_source(session, country="es", topic="tech", etag='W/"abc"')
+        make_source(session, name="El Diario", country="es", topic="tech", etag='W/"abc"')
 
     with session_scope(factory) as session:
         source = session.scalars(select(Source)).one()
 
-    assert source.name == "Example"
+    assert source.name == "El Diario"
     assert source.country == "es"
     assert source.enabled is True
     assert source.consecutive_failures == 0
@@ -122,13 +90,12 @@ def test_naive_datetime_is_refused(factory) -> None:
 
 
 def test_url_hash_is_unique(factory) -> None:
+    """Two feeds carrying the same story must collide on the dedup key, not on the URL."""
     with pytest.raises(IntegrityError):
         with session_scope(factory) as session:
             source = make_source(session)
-            make_item(session, source)
-            make_item(
-                session, source, url="https://example.com/b", canonical_url="https://example.com/b"
-            )
+            make_item(session, source, url_hash="same")
+            make_item(session, source, url_hash="same")
 
 
 def test_foreign_keys_are_enforced(factory) -> None:
@@ -150,9 +117,7 @@ def test_deleting_a_source_takes_its_items_and_verdicts(factory) -> None:
     with session_scope(factory) as session:
         source = make_source(session)
         item = make_item(session, source)
-        session.add(
-            Verdict(item_id=item.id, question="kind", distribution={"news": 1.0}, top_label="news")
-        )
+        make_verdict(session, item, distribution={"news": 1.0})
 
     with session_scope(factory) as session:
         session.delete(session.scalars(select(Source)).one())
@@ -168,15 +133,7 @@ def test_verdict_keeps_the_whole_distribution(factory) -> None:
     with session_scope(factory) as session:
         source = make_source(session)
         item = make_item(session, source)
-        session.add(
-            Verdict(
-                item_id=item.id,
-                question="kind",
-                distribution=distribution,
-                top_label="news",
-                model="english",
-            )
-        )
+        make_verdict(session, item, distribution=distribution, model="english")
 
     with session_scope(factory) as session:
         verdict = session.scalars(select(Verdict)).one()
@@ -193,18 +150,14 @@ def test_verdicts_are_insert_only_and_the_newest_wins(factory) -> None:
     with session_scope(factory) as session:
         source = make_source(session)
         item = make_item(session, source)
-        session.add(
-            Verdict(
-                item_id=item.id,
-                question="kind",
-                distribution={"opinion": 0.9},
-                top_label="opinion",
-                created_at=utcnow() - timedelta(days=1),
-            )
+        make_verdict(
+            session,
+            item,
+            distribution={"opinion": 0.9},
+            top_label="opinion",
+            created_at=utcnow() - timedelta(days=1),
         )
-        session.add(
-            Verdict(item_id=item.id, question="kind", distribution={"news": 0.8}, top_label="news")
-        )
+        make_verdict(session, item, distribution={"news": 0.8})
 
     with session_scope(factory) as session:
         rows = session.scalars(select(Verdict).order_by(Verdict.created_at.desc())).all()
@@ -217,7 +170,7 @@ def test_label_round_trip(factory) -> None:
     with session_scope(factory) as session:
         source = make_source(session)
         item = make_item(session, source)
-        session.add(Label(item_id=item.id, dimension="relevance", value="essential"))
+        make_label(session, item)
 
     with session_scope(factory) as session:
         label = session.scalars(select(Label)).one()
@@ -231,15 +184,8 @@ def test_changing_your_mind_adds_a_label_rather_than_replacing_one(factory) -> N
     with session_scope(factory) as session:
         source = make_source(session)
         item = make_item(session, source)
-        session.add(
-            Label(
-                item_id=item.id,
-                dimension="relevance",
-                value="marginal",
-                created_at=utcnow() - timedelta(hours=1),
-            )
-        )
-        session.add(Label(item_id=item.id, dimension="relevance", value="essential"))
+        make_label(session, item, value="marginal", created_at=utcnow() - timedelta(hours=1))
+        make_label(session, item, value="essential")
 
     with session_scope(factory) as session:
         labels = session.scalars(select(Label).order_by(Label.created_at)).all()

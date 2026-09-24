@@ -7,6 +7,12 @@ node_modules/
 .turbo/
 dist/
 
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
 # feed-filter local state
 tasks/
 data/

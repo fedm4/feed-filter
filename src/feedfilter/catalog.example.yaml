@@ -5,15 +5,20 @@
 # The copy is yours and is not tracked by git, so pulling never argues with your
 # curation. This file is the shared starting point and only changes by pull request.
 #
-# Tech, development and AI only for now; other topics and languages arrive in D2. Every
-# URL here has been fetched and parsed by scripts/verify_catalog.py -- a feed that has
-# never answered does not belong in this file, and one that stops answering ships as
-# `enabled: false` with a line saying why rather than being deleted.
+# Every URL here has been fetched and parsed by scripts/verify_catalog.py -- a feed that
+# has never answered does not belong in this file. A feed that stops answering ships as
+# `enabled: false` with a line saying why, rather than being deleted: the note is what
+# stops the next person spending an afternoon rediscovering the same dead end.
+#
+# The list deliberately spans the political spectrum. Filtering is the model's job; a
+# curated list that only carries one point of view has done the filtering in advance and
+# hidden it.
 #
 # Fields mirror the Source table. `country` is the audience a feed is written for, left
 # empty when it has no particular one; `topic` is the coarse bucket the UI filters on.
 
 sources:
+  # ------------------------------------------------------------------ Tech, dev and AI
   - name: Hacker News
     url: https://hnrss.org/frontpage
     lang: en
@@ -34,6 +39,27 @@ sources:
     lang: en
     topic: tech
 
+  - name: TechCrunch
+    url: https://techcrunch.com/feed/
+    lang: en
+    topic: tech
+
+  - name: MIT Technology Review
+    url: https://www.technologyreview.com/feed/
+    lang: en
+    topic: tech
+
+  - name: Rest of World
+    url: https://restofworld.org/feed/latest/
+    lang: en
+    topic: tech
+
+  - name: Xataka
+    url: https://www.xataka.com/feedburner.xml
+    lang: es
+    country: es
+    topic: tech
+
   - name: Simon Willison
     url: https://simonwillison.net/atom/everything/
     lang: en
@@ -41,6 +67,21 @@ sources:
 
   - name: Hugging Face Blog
     url: https://huggingface.co/blog/feed.xml
+    lang: en
+    topic: ai
+
+  - name: Import AI
+    url: https://importai.substack.com/feed
+    lang: en
+    topic: ai
+
+  - name: Google Research
+    url: https://research.google/blog/rss/
+    lang: en
+    topic: ai
+
+  - name: OpenAI News
+    url: https://openai.com/news/rss.xml
     lang: en
     topic: ai
 
@@ -54,6 +95,14 @@ sources:
     lang: en
     topic: ai
 
+  # Anthropic publishes no feed: /news/rss.xml and /rss.xml are 404 and the news page
+  # declares no <link rel="alternate">. Checked 2026-09-24.
+  - name: Anthropic News
+    url: https://www.anthropic.com/news/rss.xml
+    lang: en
+    topic: ai
+    enabled: false
+
   - name: LWN
     url: https://lwn.net/headlines/newrss
     lang: en
@@ -61,6 +110,16 @@ sources:
 
   - name: Julia Evans
     url: https://jvns.ca/atom.xml
+    lang: en
+    topic: dev
+
+  - name: Dan Luu
+    url: https://danluu.com/atom.xml
+    lang: en
+    topic: dev
+
+  - name: Phoronix
+    url: https://www.phoronix.com/rss.php
     lang: en
     topic: dev
 
@@ -73,3 +132,285 @@ sources:
     url: https://go.dev/blog/feed.atom
     lang: en
     topic: dev
+
+  - name: Python Insider
+    url: https://blog.python.org/feeds/posts/default
+    lang: en
+    topic: dev
+
+  - name: PostgreSQL News
+    url: https://www.postgresql.org/news.rss
+    lang: en
+    topic: dev
+
+  # ----------------------------------------------------------------------- Argentina
+  - name: Infobae
+    url: https://www.infobae.com/arc/outboundfeeds/rss/?outputType=xml
+    lang: es
+    country: ar
+    topic: news
+
+  - name: La Nacion
+    url: https://www.lanacion.com.ar/arc/outboundfeeds/rss/?outputType=xml
+    lang: es
+    country: ar
+    topic: news
+
+  - name: Clarin
+    url: https://www.clarin.com/rss/lo-ultimo/
+    lang: es
+    country: ar
+    topic: news
+
+  - name: Perfil
+    url: https://www.perfil.com/feed
+    lang: es
+    country: ar
+    topic: news
+
+  - name: elDiarioAR
+    url: https://www.eldiarioar.com/rss/
+    lang: es
+    country: ar
+    topic: news
+
+  - name: Cenital
+    url: https://cenital.com/feed/
+    lang: es
+    country: ar
+    topic: analysis
+
+  - name: Ambito
+    url: https://www.ambito.com/rss/pages/home.xml
+    lang: es
+    country: ar
+    topic: economy
+
+  - name: iProfesional
+    url: https://www.iprofesional.com/rss/home
+    lang: es
+    country: ar
+    topic: economy
+
+  - name: Chequeado
+    url: https://chequeado.com/feed/
+    lang: es
+    country: ar
+    topic: factcheck
+
+  # Página/12 declares no feed in its HTML and every documented path -- /rss/portada,
+  # /rss/edicion-impresa, /rss/secciones/... -- answers 404. Checked 2026-09-24.
+  - name: Pagina 12
+    url: https://www.pagina12.com.ar/rss/portada
+    lang: es
+    country: ar
+    topic: news
+    enabled: false
+
+  # 404 on the documented path, and the site declares no feed. Checked 2026-09-24.
+  - name: Bae Negocios
+    url: https://www.baenegocios.com/rss/pages/home.xml
+    lang: es
+    country: ar
+    topic: economy
+    enabled: false
+
+  # --------------------------------------------------------------------------- Espana
+  - name: El Pais
+    url: https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada
+    lang: es
+    country: es
+    topic: news
+
+  - name: elDiario.es
+    url: https://www.eldiario.es/rss/
+    lang: es
+    country: es
+    topic: news
+
+  - name: El Mundo
+    url: https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml
+    lang: es
+    country: es
+    topic: news
+
+  - name: ABC
+    url: https://www.abc.es/rss/feeds/abcPortada.xml
+    lang: es
+    country: es
+    topic: news
+
+  - name: La Vanguardia
+    url: https://www.lavanguardia.com/rss/home.xml
+    lang: es
+    country: es
+    topic: news
+
+  - name: El Confidencial
+    url: https://rss.elconfidencial.com/espana/
+    lang: es
+    country: es
+    topic: news
+
+  - name: El Espanol
+    url: https://www.elespanol.com/rss/
+    lang: es
+    country: es
+    topic: news
+
+  - name: 20minutos
+    url: https://www.20minutos.es/rss/
+    lang: es
+    country: es
+    topic: news
+
+  - name: RTVE
+    url: https://api2.rtve.es/rss/temas_noticias.xml
+    lang: es
+    country: es
+    topic: news
+
+  - name: Newtral
+    url: https://www.newtral.es/feed/
+    lang: es
+    country: es
+    topic: factcheck
+
+  - name: Maldita.es
+    url: https://maldita.es/feed/
+    lang: es
+    country: es
+    topic: factcheck
+
+  # /rss/, /rss/todo-publico and /feed/ all answer 404, and the site declares no feed
+  # in its HTML. Checked 2026-09-24.
+  - name: Publico
+    url: https://www.publico.es/rss/
+    lang: es
+    country: es
+    topic: news
+    enabled: false
+
+  # -------------------------------------------------------------------- International
+  - name: BBC Mundo
+    url: https://feeds.bbci.co.uk/mundo/rss.xml
+    lang: es
+    topic: news
+
+  - name: BBC World
+    url: https://feeds.bbci.co.uk/news/world/rss.xml
+    lang: en
+    topic: news
+
+  - name: France 24 Espanol
+    url: https://www.france24.com/es/rss
+    lang: es
+    topic: news
+
+  - name: DW Espanol
+    url: https://rss.dw.com/rdf/rss-sp-all
+    lang: es
+    topic: news
+
+  - name: Euronews Espanol
+    url: https://es.euronews.com/rss
+    lang: es
+    topic: news
+
+  - name: Al Jazeera
+    url: https://www.aljazeera.com/xml/rss/all.xml
+    lang: en
+    topic: news
+
+  - name: The Guardian
+    url: https://www.theguardian.com/world/rss
+    lang: en
+    topic: news
+
+  - name: NPR
+    url: https://feeds.npr.org/1001/rss.xml
+    lang: en
+    topic: news
+
+  - name: The Economist
+    url: https://www.economist.com/latest/rss.xml
+    lang: en
+    topic: analysis
+
+  # Reuters retired its public RSS; both reutersagency.com/feed/ and the Arc outbound
+  # feed answer 404. Their wire is licensed, not syndicated. Checked 2026-09-24.
+  - name: Reuters
+    url: https://www.reutersagency.com/feed/
+    lang: en
+    topic: news
+    enabled: false
+
+  # AP answers 403 to any non-browser client, on both index.rss and the hub feeds.
+  # Working around that means pretending to be something we are not, so it stays off.
+  # Checked 2026-09-24.
+  - name: AP News
+    url: https://apnews.com/index.rss
+    lang: en
+    topic: news
+    enabled: false
+
+  # -------------------------------------------------------------------------- Science
+  - name: Quanta Magazine
+    url: https://api.quantamagazine.org/feed/
+    lang: en
+    topic: science
+
+  - name: Science News
+    url: https://www.sciencenews.org/feed
+    lang: en
+    topic: science
+
+  - name: Science Daily
+    url: https://www.sciencedaily.com/rss/all.xml
+    lang: en
+    topic: science
+
+  - name: Phys.org
+    url: https://phys.org/rss-feed/
+    lang: en
+    topic: science
+
+  - name: Nautilus
+    url: https://nautil.us/feed/
+    lang: en
+    topic: science
+
+  - name: ESA Space News
+    url: https://www.esa.int/rssfeed/Our_Activities/Space_News
+    lang: en
+    topic: science
+
+  - name: Materia
+    url: https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/ciencia/portada
+    lang: es
+    topic: science
+
+  # Answers 200 with an HTML bot-challenge page instead of the feed, on nature.rss and
+  # on the per-subject feeds. Checked 2026-09-24.
+  - name: Nature
+    url: https://www.nature.com/nature.rss
+    lang: en
+    topic: science
+    enabled: false
+
+  # Serves HTML rather than XML at /rss and /rss/todos. Checked 2026-09-24.
+  - name: Investigacion y Ciencia
+    url: https://www.investigacionyciencia.es/rss
+    lang: es
+    country: es
+    topic: science
+    enabled: false
+
+  # /rss, /rss/todos and /servicios/rss all answer 404, and the site declares no feed.
+  # Checked 2026-09-24.
+  - name: Agencia SINC
+    url: https://www.agenciasinc.es/rss
+    lang: es
+    country: es
+    topic: science
+    enabled: false

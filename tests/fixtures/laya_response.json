@@ -1,0 +1,71 @@
+{
+  "model": "laya-rl-agent",
+  "answers": {
+    "kind": {
+      "type": "choice",
+      "choice": "news",
+      "probabilities": {
+        "news": 0.9124,
+        "analysis": 0.0556,
+        "opinion": 0.019,
+        "promotion": 0.013
+      },
+      "confidence": 0.7287,
+      "answer_confidence": 0.9124,
+      "action": {
+        "act_probability": 1
+      }
+    },
+    "sensationalism": {
+      "type": "score",
+      "score": 0.7274,
+      "legend": {
+        "0": "factual reporting",
+        "1": "mildly slanted",
+        "2": "clickbait",
+        "3": "tabloid outrage"
+      },
+      "probabilities": {
+        "0": 0.3653,
+        "1": 0.5681,
+        "2": 0.0404,
+        "3": 0.0261
+      },
+      "confidence": 0.3407,
+      "answer_confidence": 0.5681,
+      "action": {
+        "act_probability": 1
+      }
+    },
+    "economics": {
+      "type": "noul",
+      "noul": 0.8301,
+      "confidence": 0.8301,
+      "answer_confidence": 0.8301,
+      "action": {
+        "act_probability": 1
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 251,
+    "output_tokens": 0
+  },
+  "routing": {
+    "model": "english",
+    "repo": "convaiinnovations/laya",
+    "reason": "English Latin text",
+    "detection": {
+      "script": "latin",
+      "script_profile": {
+        "latin": 1
+      },
+      "language": "en",
+      "is_english": true,
+      "language_undecided": false,
+      "diacritic_rate": 0,
+      "non_latin_fraction": 0
+    },
+    "workflow": null
+  }
+}

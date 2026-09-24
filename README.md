@@ -124,7 +124,51 @@ So thresholds start permissive, and the 👍/👎 labels the feed collects are t
 model that actually discriminates. On the published benchmark the gap is the same shape:
 0.342–0.362 zero-shot against 0.318 for random guessing, versus 0.766 fine-tuned.
 
-Reproduce with `scripts/bench_classify.py` once B3 lands.
+Reproducing this table needs labelled samples, which arrive with the export in I1. What
+`scripts/bench_classify.py` measures today is throughput, below.
+
+### Throughput: also measured
+
+`scripts/bench_classify.py` classifies a mixed English/Spanish corpus through the same
+client the application uses, and prints what the poll interval has to live within.
+
+```sh
+uv run scripts/bench_classify.py --n 200
+```
+
+On this host -- Ryzen 7 9700X, 8 physical cores, Laya on CPU with both checkpoints
+loaded, three questions per item:
+
+| | |
+|---|---|
+| Throughput | 4.67 items/sec |
+| Latency | p50 127 ms, p95 325 ms, p99 329 ms |
+| 1000 items | 3.6 min |
+
+That is comfortably inside the 30 minute `FF_POLL_MINUTES` default, so the default stays.
+
+**Concurrency buys nothing.** Laya has no batch endpoint and its handler holds one lock
+around inference, so requests fired in parallel queue rather than overlap. Measured, they
+do exactly that -- throughput flat, latency rising in step:
+
+| Concurrency | Throughput | p50 |
+|---|---|---|
+| 1 | 4.67 items/sec | 142 ms |
+| 2 | 4.66 items/sec | 427 ms |
+| 4 | 4.66 items/sec | 858 ms |
+| 8 | 4.65 items/sec | 1716 ms |
+
+**Questions ride cheaply together.** Each question costs about 70 ms and each call about
+20 ms on top, so asking everything in one request beats splitting it:
+
+| Questions per item | Throughput | Per question |
+|---|---|---|
+| 1 | 10.83 items/sec | 92 ms |
+| 2 | 6.53 items/sec | 77 ms |
+| 3 | 4.63 items/sec | 72 ms |
+| 4 | 3.57 items/sec | 70 ms |
+
+If a cycle ever stops fitting, the lever is fewer questions per item, not more workers.
 
 ## Development
 

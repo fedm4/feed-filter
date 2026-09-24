@@ -6,3 +6,11 @@ node_modules/
 .venv/
 .turbo/
 dist/
+
+# feed-filter local state
+tasks/
+data/
+config.yaml
+*.db
+.laya-venv/
+models/

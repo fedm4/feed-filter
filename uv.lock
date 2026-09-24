@@ -421,17 +421,6 @@ wheels = [
 ]
 
 [[package]]
-name = "claude-scaffold"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "pr-agent" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "pr-agent" }]
-
-[[package]]
 name = "click"
 version = "8.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -581,6 +570,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/df/60/dad662ec9a33b4a5fe44f60699258da64172c39bd041da2994422cdc40fe/fastuuid-0.14.0-cp314-cp314-win32.whl", hash = "sha256:e23fc6a83f112de4be0cc1990e5b127c27663ae43f866353166f87df58e73d06", size = 154532, upload-time = "2025-10-19T22:35:18.217Z" },
     { url = "https://files.pythonhosted.org/packages/1f/f6/da4db31001e854025ffd26bc9ba0740a9cbba2c3259695f7c5834908b336/fastuuid-0.14.0-cp314-cp314-win_amd64.whl", hash = "sha256:df61342889d0f5e7a32f7284e55ef95103f2110fee433c2ae7c2c0956d76ac8a", size = 156457, upload-time = "2025-10-19T22:33:44.579Z" },
 ]
+
+[[package]]
+name = "feed-filter"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pr-agent" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pr-agent" }]
 
 [[package]]
 name = "filelock"

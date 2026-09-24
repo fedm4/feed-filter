@@ -27,7 +27,8 @@ from feedfilter.catalog import EXAMPLE_PATH, CatalogEntry, CatalogError, load_ca
 # entries", which the standard library answers; the fetcher in D3 is where a real parser
 # earns its place.
 ENTRY_TAGS = {
-    "item",  # RSS 2.0 and RDF
+    "item",  # RSS 2.0
+    "{http://purl.org/rss/1.0/}item",  # RSS 1.0, which is RDF and namespaces its items
     "{http://www.w3.org/2005/Atom}entry",  # Atom
 }
 
@@ -57,6 +58,12 @@ def check(client: httpx.Client, entry: CatalogEntry) -> Result:
 
     if response.status_code != 200:
         return Result(entry, False, f"HTTP {response.status_code}")
+
+    # A bot wall answers 200 with an HTML challenge page. Saying so beats letting it
+    # surface as a confusing parse error 14 lines into a document nobody will read.
+    content_type = response.headers.get("content-type", "")
+    if "html" in content_type.lower():
+        return Result(entry, False, f"served HTML, not a feed ({content_type.split(';')[0]})")
 
     try:
         found = count_entries(response.content)
@@ -96,8 +103,15 @@ def main() -> int:
             flag = "" if result.entry.enabled else "  (disabled)"
             print(f"{mark}  {result.entry.name:<22} {result.detail}{flag}", flush=True)
 
+    # A disabled entry that fails is the expected outcome, not a success. Counting it as
+    # one would let a real breakage hide inside a reassuring ratio.
+    passed = [r for r in results if r.ok]
     failed = [r for r in results if not r.ok and r.entry.enabled]
-    print(f"\n{len(results) - len(failed)}/{len(results)} ok")
+    expected = [r for r in results if not r.ok and not r.entry.enabled]
+    summary = f"\n{len(passed)} ok, {len(failed)} failed"
+    if expected:
+        summary += f", {len(expected)} failed as documented (disabled)"
+    print(summary)
     if failed:
         print("\nFailing, and enabled:")
         for result in failed:

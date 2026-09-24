@@ -170,6 +170,28 @@ do exactly that -- throughput flat, latency rising in step:
 
 If a cycle ever stops fitting, the lever is fewer questions per item, not more workers.
 
+## Sources
+
+The feed list is yours, so it is not tracked. Copy the example once, then edit it:
+
+```sh
+mkdir -p data && cp src/feedfilter/catalog.example.yaml data/catalog.yaml
+uv run scripts/verify_catalog.py        # every URL answers, and has entries
+```
+
+`catalog.example.yaml` ships with the code and changes only by pull request;
+`data/catalog.yaml` is yours and a `git pull` never argues with it. `FF_CATALOG_PATH`
+moves it elsewhere.
+
+Missing is an error rather than a silent fallback to the example: a deployment quietly
+polling a list nobody chose, or a typo in `FF_CATALOG_PATH` that looks exactly like
+success, are both worse than being told to copy a file.
+
+Before adding a feed, fetch it. `verify_catalog.py` checks each URL parses as a feed and
+carries at least one entry, and exits non-zero when an enabled one fails. A URL that was
+never fetched is a guess, and a wrong guess shows up months later as a source that
+silently produces nothing.
+
 ## Development
 
 ```sh

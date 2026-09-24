@@ -1,0 +1,75 @@
+# A starting point for your own source list. Copy it before editing:
+#
+#     cp src/feedfilter/catalog.example.yaml data/catalog.yaml
+#
+# The copy is yours and is not tracked by git, so pulling never argues with your
+# curation. This file is the shared starting point and only changes by pull request.
+#
+# Tech, development and AI only for now; other topics and languages arrive in D2. Every
+# URL here has been fetched and parsed by scripts/verify_catalog.py -- a feed that has
+# never answered does not belong in this file, and one that stops answering ships as
+# `enabled: false` with a line saying why rather than being deleted.
+#
+# Fields mirror the Source table. `country` is the audience a feed is written for, left
+# empty when it has no particular one; `topic` is the coarse bucket the UI filters on.
+
+sources:
+  - name: Hacker News
+    url: https://hnrss.org/frontpage
+    lang: en
+    topic: tech
+
+  - name: Lobsters
+    url: https://lobste.rs/rss
+    lang: en
+    topic: tech
+
+  - name: Ars Technica
+    url: https://feeds.arstechnica.com/arstechnica/index
+    lang: en
+    topic: tech
+
+  - name: The Verge
+    url: https://www.theverge.com/rss/index.xml
+    lang: en
+    topic: tech
+
+  - name: Simon Willison
+    url: https://simonwillison.net/atom/everything/
+    lang: en
+    topic: ai
+
+  - name: Hugging Face Blog
+    url: https://huggingface.co/blog/feed.xml
+    lang: en
+    topic: ai
+
+  - name: arXiv cs.CL
+    url: http://export.arxiv.org/rss/cs.CL
+    lang: en
+    topic: ai
+
+  - name: arXiv cs.LG
+    url: http://export.arxiv.org/rss/cs.LG
+    lang: en
+    topic: ai
+
+  - name: LWN
+    url: https://lwn.net/headlines/newrss
+    lang: en
+    topic: dev
+
+  - name: Julia Evans
+    url: https://jvns.ca/atom.xml
+    lang: en
+    topic: dev
+
+  - name: Rust Blog
+    url: https://blog.rust-lang.org/feed.xml
+    lang: en
+    topic: dev
+
+  - name: The Go Blog
+    url: https://go.dev/blog/feed.atom
+    lang: en
+    topic: dev

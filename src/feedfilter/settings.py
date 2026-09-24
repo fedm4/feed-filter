@@ -73,6 +73,9 @@ class Settings(BaseSettings):
 
     db_path: Path = Path("data/feedfilter.db")
     config_path: Path = Path("data/config.yaml")
+    # The curated feed list. Yours, so it lives with your data and not in the package;
+    # catalog.example.yaml ships alongside the code as the starting point to copy.
+    catalog_path: Path = Path("data/catalog.yaml")
 
     host: str = "0.0.0.0"
     port: int = Field(default=8080, gt=0, le=65535)

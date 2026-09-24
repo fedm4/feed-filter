@@ -3,9 +3,10 @@ export
 
 .PHONY: check pr-review pr-incremental pr-describe pr-improve pr-ask pr-review-local
 
-# No checks yet: each stack replaces it (the `ts` branch runs lint, typecheck and test).
 check:
-	@echo "no checks yet"
+	uv run --frozen ruff check .
+	uv run --frozen ruff format --check .
+	uv run --frozen pytest
 
 pr-review:
 	uv run pr-agent --pr_url "$(REPO_PULL_URL)$(PR)" review

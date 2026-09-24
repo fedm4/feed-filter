@@ -22,8 +22,18 @@ Chosen over an MCP backlog tool for this project.
 
 ## Language
 
-Replies to the user in Spanish. Everything written to the repo — code, comments, docs,
-commit messages — in English. User-facing UI copy in Spanish.
+Replies to the user in Spanish.
+
+Everything written to the repo — code, comments, docs, commit messages — in English.
+
+User-facing copy is never hardcoded. UI strings go through the translation catalogue and
+the active language comes from `FF_UI_LANG` (default `es`). No literal Spanish in
+templates or Python.
+
+Model-facing labels are stable English identifiers (`news`, `analysis`, `opinion`,
+`promotion`); their descriptions live in `config.yaml` and the UI translates the
+identifier for display. This keeps the interface language independent from how the
+classifier is prompted.
 
 ## Verify
 

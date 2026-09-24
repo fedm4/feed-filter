@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
+from .models import Base
 from .settings import Settings
 
 IN_MEMORY = ":memory:"
@@ -50,12 +51,11 @@ def _sqlite_pragmas(dbapi_connection: Any, _record: Any) -> None:
 def create_db_engine(settings: Settings | None = None, *, path: Path | str | None = None) -> Engine:
     """Engine for ``FF_DB_PATH``, or for ``path`` when one is given.
 
-    Pass ``path=":memory:"`` for tests. The parent directory is created if missing, so a
-    fresh container does not need a manual step before first boot.
+    Pass ``path=":memory:"`` for tests. Creating an engine touches nothing: SQLAlchemy
+    connects lazily, and the directory is made in ``init_schema`` at boot. That keeps
+    importing this package free of side effects on disk.
     """
     target = path if path is not None else (settings or Settings()).db_path
-    if str(target) != IN_MEMORY:
-        Path(target).expanduser().parent.mkdir(parents=True, exist_ok=True)
     return create_engine(_url_for(target), future=True)
 
 
@@ -80,3 +80,21 @@ def session_scope(factory: sessionmaker[Session]) -> Iterator[Session]:
         raise
     finally:
         session.close()
+
+
+def init_schema(engine: Engine) -> None:
+    """Make the database usable: its directory, then any missing table.
+
+    No Alembic for v1. ``create_all`` is enough for a single-user application, and it is
+    idempotent, so it can run on every boot. The cost is that it only ever *adds*: a
+    column that changes type or disappears needs a migration tool, and that decision gets
+    revisited as its own task if the schema starts churning.
+
+    Creating the parent directory belongs here rather than alongside the engine, so that
+    a fresh deployment needs no manual step while merely importing the package writes
+    nothing.
+    """
+    location = engine.url.database
+    if location and location != IN_MEMORY:
+        Path(location).expanduser().parent.mkdir(parents=True, exist_ok=True)
+    Base.metadata.create_all(engine)

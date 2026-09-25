@@ -8,6 +8,7 @@ dependencies = [
     "httpx",
     "pydantic-settings>=2.14.2",
     "pyyaml>=6.0.1",
+    "rapidfuzz>=3.14.6",
     "sqlalchemy>=2.0.54",
     "uvicorn[standard]",
 ]

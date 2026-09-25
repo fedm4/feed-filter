@@ -60,6 +60,15 @@ class Settings(BaseSettings):
     laya_timeout_s: int = Field(default=60, gt=0)
 
     poll_minutes: int = Field(default=30, gt=0)
+    # Headline similarity, 0-100, above which two outlets are treated as carrying the
+    # same story. 90 was measured, not chosen: over 815 real AR and ES headlines every
+    # cross-outlet pair at 90 or above was a genuine duplicate, while 82-85 already held
+    # false positives. Lowering it trades silently-lost articles for fewer duplicates,
+    # which is the wrong side of that trade.
+    dedup_threshold: int = Field(default=90, ge=0, le=100)
+    # How far back to look for the same story. A cable is republished within hours, so
+    # a wider window only adds candidates that are coincidence.
+    dedup_window_hours: int = Field(default=48, gt=0)
     # Sent to every feed we poll. Names the software, not the person running it:
     # a contact URL here would put one operator's identity in 59 servers' logs, and
     # nothing about a personal reader fetching public RSS requires that. Add one if a

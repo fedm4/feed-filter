@@ -20,6 +20,7 @@ from typing import Any
 from sqlalchemy import (
     Boolean,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -129,6 +130,9 @@ class Item(Base):
         back_populates="item", cascade="all, delete-orphan"
     )
     labels: Mapped[list[Label]] = relationship(back_populates="item", cascade="all, delete-orphan")
+    aliases: Mapped[list[ItemAlias]] = relationship(
+        back_populates="item", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (Index("ix_items_fetched_at", "fetched_at"),)
 
@@ -196,3 +200,37 @@ class Label(Base):
     __table_args__ = (
         UniqueConstraint("item_id", "dimension", "created_at", name="uq_label_item_dimension_time"),
     )
+
+
+class ItemAlias(Base):
+    """Another outlet that carried the same story.
+
+    When fuzzy matching decides two headlines are the same agency cable, the first one
+    stays as the Item and the rest land here instead of being thrown away. The UI reads
+    this to say "also in: Clarin, Infobae", which is more useful than either showing the
+    story five times or silently hiding four of them.
+
+    Keeping the other outlet's own headline matters: the wording differences are exactly
+    what a reader might want to see, and what a later review of a wrong merge needs.
+    """
+
+    __tablename__ = "item_aliases"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id", ondelete="CASCADE"))
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id", ondelete="CASCADE"))
+
+    url: Mapped[str] = mapped_column(String(2000))
+    title: Mapped[str] = mapped_column(Text)
+    # The score that merged them, kept so a bad threshold can be reviewed after the fact
+    # rather than argued about from memory.
+    score: Mapped[float] = mapped_column(Float)
+
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+    item: Mapped[Item] = relationship(back_populates="aliases")
+    source: Mapped[Source] = relationship()
+
+    # One outlet appears once per story. A second near-identical piece from the same
+    # outlet is its own article, not another alias of this one.
+    __table_args__ = (UniqueConstraint("item_id", "source_id", name="uq_alias_item_source"),)

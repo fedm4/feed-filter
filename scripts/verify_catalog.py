@@ -22,6 +22,7 @@ from xml.etree import ElementTree
 import httpx
 
 from feedfilter.catalog import EXAMPLE_PATH, CatalogEntry, CatalogError, load_catalog
+from feedfilter.settings import Settings
 
 # Deliberately not feedparser. The question here is only "is this XML, and does it hold
 # entries", which the standard library answers; the fetcher in D3 is where a real parser
@@ -33,8 +34,9 @@ ENTRY_TAGS = {
 }
 
 # Some feeds answer 403 to a bare client. Announcing what we are is both politer and more
-# likely to work than pretending to be a browser.
-HEADERS = {"user-agent": "feed-filter/0.1 (+https://github.com/fedm4/feed-filter)"}
+# likely to work than pretending to be a browser -- and naming the software says enough
+# without naming whoever is running it.
+HEADERS = {"user-agent": Settings().user_agent}
 
 
 @dataclass

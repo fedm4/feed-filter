@@ -1,0 +1,111 @@
+# Cadenas de la interfaz en español. Es el idioma por defecto (FF_UI_LANG=es).
+#
+# Los identificadores bajo content_type y las escalas son las etiquetas que ve el modelo
+# (E1): claves estables en inglés que se guardan en la base. Esto son sus nombres para
+# mostrar, y por eso traducirlos acá es correcto y guardar el nombre mostrado no lo sería.
+
+app:
+  name: feed-filter
+  tagline: Una manera más tranquila de leer noticias
+
+nav:
+  feed: Feed
+  sources: Fuentes
+  config: Ajustes
+
+feed:
+  title: Feed
+  empty: Todavía no hay nada. Corré una actualización desde la página de fuentes.
+  empty_filtered: Los filtros actuales esconden todo.
+  showing: "Mostrando %(shown)s de %(total)s"
+  poll_now: Actualizar ahora
+  polling: Actualizando...
+  read_original: Leer en la fuente
+  also_in: También en
+  unclassified: Sin clasificar
+
+filters:
+  title: Filtros
+  min_relevance: Relevancia mínima
+  max_sensationalism: Sensacionalismo máximo
+  hide_promotion: Ocultar promoción
+  reset: Restablecer
+
+content_type:
+  news: Información
+  analysis: Análisis
+  opinion: Opinión
+  promotion: Promoción
+
+relevance:
+  irrelevant: Irrelevante
+  marginal: Marginal
+  interesting: Interesante
+  essential: Imperdible
+
+sensationalism:
+  factual: Sobrio
+  slanted: Cargado
+  clickbait: Clickbait
+  tabloid: Amarillista
+
+topic:
+  technology: Tecnología
+  ai: IA
+  economy: Economía
+  politics: Política
+  science: Ciencia
+  culture: Cultura
+  other: Otros
+
+feedback:
+  title: ¿Estuvo bien?
+  agree: De acuerdo
+  disagree: En desacuerdo
+  saved: Guardado
+  progress: "%(count)s de %(target)s etiquetas para poder entrenar"
+  why: Las etiquetas son lo que convierte esto de una estimación en un filtro entrenado.
+
+sources:
+  title: Fuentes
+  enabled: Activa
+  disabled: Inactiva
+  dead: "Fallando (%(count)s seguidas)"
+  add: Agregar un feed
+  add_url: URL del feed
+  add_name: Nombre
+  add_button: Agregar
+  added: "Se agregó %(name)s"
+  already_present: Ese feed ya está en la lista
+  invalid_url: Eso no parece la URL de un feed
+  toggle: Cambiar
+  import_opml: Importar OPML
+  import_button: Importar
+  imported: "Se importaron %(added)s feeds, se saltearon %(skipped)s que ya estaban"
+  import_failed: No se pudo leer ese archivo como OPML
+  count: "%(enabled)s de %(total)s activas"
+
+config:
+  title: Ajustes
+  interests: Intereses
+  interests_help: Qué querés leer y qué no. Esto se le manda al modelo.
+  criteria: Criterios
+  criteria_help: >-
+    El texto que lee el modelo para cada peldaño. Que sea corto: las descripciones largas
+    midieron peor que las cortas.
+  topics: Temas
+  save: Guardar
+  saved: Guardado
+  invalid: "No se pudo guardar: %(error)s"
+  export: Exportar
+  import: Importar
+  imported: Ajustes importados
+  import_failed: "No se pudo leer el archivo: %(error)s"
+  env_locked: Fijado por una variable de entorno
+  thresholds: Umbrales
+
+time:
+  just_now: recién
+  minutes: "hace %(count)sm"
+  hours: "hace %(count)sh"
+  days: "hace %(count)sd"

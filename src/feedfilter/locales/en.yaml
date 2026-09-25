@@ -1,0 +1,111 @@
+# English interface strings. Keys are dotted paths; the values are what the reader sees.
+#
+# The identifiers under content_type and the ladders are the model-facing labels from E1 --
+# stable English keys stored in the database. These are their *display* names, which is why
+# translating them here is correct and storing a display name would not be.
+
+app:
+  name: feed-filter
+  tagline: A quieter way to read the news
+
+nav:
+  feed: Feed
+  sources: Sources
+  config: Settings
+
+feed:
+  title: Feed
+  empty: Nothing here yet. Run a poll from the sources page.
+  empty_filtered: Every item is hidden by the current sliders.
+  showing: "Showing %(shown)s of %(total)s"
+  poll_now: Poll now
+  polling: Polling...
+  read_original: Read at source
+  also_in: Also in
+  unclassified: Not yet classified
+
+filters:
+  title: Filters
+  min_relevance: Minimum relevance
+  max_sensationalism: Maximum sensationalism
+  hide_promotion: Hide promotion
+  reset: Reset
+
+content_type:
+  news: Reporting
+  analysis: Analysis
+  opinion: Opinion
+  promotion: Promotion
+
+relevance:
+  irrelevant: Irrelevant
+  marginal: Marginal
+  interesting: Interesting
+  essential: Essential
+
+sensationalism:
+  factual: Factual
+  slanted: Slanted
+  clickbait: Clickbait
+  tabloid: Tabloid
+
+topic:
+  technology: Technology
+  ai: AI
+  economy: Economy
+  politics: Politics
+  science: Science
+  culture: Culture
+  other: Other
+
+feedback:
+  title: Was this right?
+  agree: Agree
+  disagree: Disagree
+  saved: Saved
+  progress: "%(count)s of %(target)s labels toward fine-tuning"
+  why: Labels are what turn this from a guess into a trained filter.
+
+sources:
+  title: Sources
+  enabled: Enabled
+  disabled: Disabled
+  dead: "Failing (%(count)s in a row)"
+  add: Add a feed
+  add_url: Feed URL
+  add_name: Name
+  add_button: Add
+  added: "Added %(name)s"
+  already_present: That feed is already in the list
+  invalid_url: That does not look like a feed URL
+  toggle: Toggle
+  import_opml: Import OPML
+  import_button: Import
+  imported: "Imported %(added)s feeds, skipped %(skipped)s already present"
+  import_failed: That file could not be read as OPML
+  count: "%(enabled)s of %(total)s enabled"
+
+config:
+  title: Settings
+  interests: Interests
+  interests_help: What you want to read about, and what you do not. This goes to the model.
+  criteria: Criteria
+  criteria_help: >-
+    The wording the model reads for each rung. Keep it short: long descriptions measured
+    worse than short ones.
+  topics: Topics
+  save: Save
+  saved: Saved
+  invalid: "That could not be saved: %(error)s"
+  export: Export
+  import: Import
+  imported: Settings imported
+  import_failed: "That file could not be read: %(error)s"
+  env_locked: Set by an environment variable
+  thresholds: Thresholds
+
+time:
+  just_now: just now
+  minutes: "%(count)sm ago"
+  hours: "%(count)sh ago"
+  days: "%(count)sd ago"

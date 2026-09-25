@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .catalog import sync_catalog
 from .db import create_db_engine, create_session_factory, init_schema, session_scope
-from .routes import admin, feed, feedback, sources
+from .routes import admin, config, feed, feedback, sources
 from .scheduler import PollRunner, create_scheduler
 from .settings import Settings
 from .templating import STATIC_DIR, build_templates
@@ -69,6 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(feed.router)
     app.include_router(feedback.router)
     app.include_router(sources.router)
+    app.include_router(config.router)
     app.include_router(admin.router)
 
     @app.get("/healthz")

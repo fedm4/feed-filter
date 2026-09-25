@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ t('config.title') }} · {{ t('app.name') }}{% endblock %}
+
+{% block content %}
+<h2>{{ t('config.title') }}</h2>
+
+<article>
+  <header><strong>{{ t('config.thresholds') }}</strong></header>
+  {# Read-only on purpose: an environment variable beats the file, and a field that looks
+     editable but silently does nothing is worse than one that says it is locked. #}
+  <table>
+    <tbody>
+      {% for name, value in thresholds.items() %}
+        <tr>
+          <td><code>{{ name }}</code></td>
+          <td>{{ value }}</td>
+          <td><small>{{ t('config.env_locked') }}</small></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</article>
+
+<form method="post" action="/config">
+  <label for="document">
+    {{ t('config.criteria') }}
+    <small>{{ t('config.criteria_help') }}</small>
+  </label>
+  <textarea id="document" name="document" rows="26" spellcheck="false">{{ document }}</textarea>
+  <button type="submit">{{ t('config.save') }}</button>
+</form>
+
+<div class="grid">
+  <article>
+    <header><strong>{{ t('config.export') }}</strong></header>
+    <a href="/config/export" role="button" class="outline">{{ t('config.export') }}</a>
+  </article>
+  <article>
+    <header><strong>{{ t('config.import') }}</strong></header>
+    <form method="post" action="/config/import" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".yaml,.yml,text/yaml,application/x-yaml" required>
+      <button type="submit">{{ t('config.import') }}</button>
+    </form>
+  </article>
+</div>
+{% endblock %}

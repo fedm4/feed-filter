@@ -24,6 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .canonical import canonicalize, url_hash
+from .dedup import find_duplicate, record_alias
 from .models import Item, Source
 from .settings import Settings
 
@@ -52,6 +53,8 @@ class FetchOutcome:
     status: Status
     stored: int = 0
     seen: int = 0
+    #: Entries recognised as a story another outlet already carried.
+    merged: int = 0
     detail: str = ""
 
     @property
@@ -114,21 +117,49 @@ def conditional_headers(source: Source) -> dict[str, str]:
     return headers
 
 
-def store_entries(session: Session, source: Source, entries: Sequence[ParsedEntry]) -> int:
-    """Insert entries not already stored. Returns how many were new.
+def store_entries(
+    session: Session,
+    source: Source,
+    entries: Sequence[ParsedEntry],
+    *,
+    settings: Settings | None = None,
+) -> tuple[int, int]:
+    """Insert entries not already stored. Returns (stored, merged).
 
     Feeds repeat themselves by design -- every poll re-sends the same twenty articles --
     so the common case is that nothing here is new.
+
+    Two filters, in order of cost. The exact one is a single indexed lookup and catches a
+    feed republishing its own entry. The fuzzy one compares headlines and catches the same
+    agency cable running in five outlets; it only runs on entries the cheap filter let
+    through.
     """
     hashes = {url_hash(entry.url): entry for entry in entries}
     if not hashes:
-        return 0
+        return 0, 0
 
     known = set(session.scalars(select(Item.url_hash).where(Item.url_hash.in_(hashes))).all())
-    stored = 0
+    stored = merged = 0
     for digest, entry in hashes.items():
         if digest in known:
             continue
+
+        match = find_duplicate(session, source_id=source.id, title=entry.title, settings=settings)
+        if match is not None:
+            if (
+                record_alias(session, match, source_id=source.id, url=entry.url, title=entry.title)
+                is not None
+            ):
+                merged += 1
+                log.info(
+                    "%s: %r merged into item %d at %.1f",
+                    source.name,
+                    entry.title[:60],
+                    match.item.id,
+                    match.score,
+                )
+            continue
+
         session.add(
             Item(
                 source_id=source.id,
@@ -145,7 +176,7 @@ def store_entries(session: Session, source: Source, entries: Sequence[ParsedEntr
         )
         stored += 1
     session.flush()
-    return stored
+    return stored, merged
 
 
 def poll_source(session: Session, client: httpx.Client, source: Source) -> FetchOutcome:
@@ -182,15 +213,17 @@ def poll_source(session: Session, client: httpx.Client, source: Source) -> Fetch
         log.warning("%s: %s, %d in a row", source.name, detail, source.consecutive_failures)
         return FetchOutcome(source.name, Status.FAILED, detail=detail)
 
-    stored = store_entries(session, source, entries)
+    stored, merged = store_entries(session, source, entries)
 
     # Only now: validators are recorded once the body they describe has been stored, so
     # a crash between the two costs a re-fetch rather than a silently skipped update.
     source.etag = response.headers.get("etag")
     source.last_modified = response.headers.get("last-modified")
     source.consecutive_failures = 0
-    log.info("%s: %d new of %d", source.name, stored, len(entries))
-    return FetchOutcome(source.name, Status.FETCHED, stored=stored, seen=len(entries))
+    log.info("%s: %d new of %d (%d merged)", source.name, stored, len(entries), merged)
+    return FetchOutcome(
+        source.name, Status.FETCHED, stored=stored, seen=len(entries), merged=merged
+    )
 
 
 def build_client(settings: Settings | None = None, *, timeout: float = 30.0) -> httpx.Client:

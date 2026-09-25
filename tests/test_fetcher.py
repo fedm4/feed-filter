@@ -287,3 +287,28 @@ def test_the_user_agent_is_configurable() -> None:
 
     with build_client(Settings(user_agent="feed-filter/0.1 (+mailto:me@example.com)")) as client:
         assert client.headers["user-agent"] == "feed-filter/0.1 (+mailto:me@example.com)"
+
+
+def test_the_same_article_through_two_tracking_urls_stores_one_row(factory) -> None:
+    """D4's reason to exist: two feeds carry one story, each adding its own parameters."""
+    one = RSS.replace(
+        "https://example.com/first", "https://example.com/story?utm_source=feed-a"
+    ).replace("<item>\n    <title>Second", "<!-- <item>\n    <title>Second")
+    two = RSS.replace(
+        "https://example.com/first", "https://example.com/story?utm_campaign=b#lede"
+    ).replace("<item>\n    <title>Second", "<!-- <item>\n    <title>Second")
+
+    with session_scope(factory) as session:
+        first_source = make_source(session, name="Feed A")
+        second_source = make_source(session, name="Feed B")
+        first = poll_source(session, client_for(responder(body=one)), first_source)
+        second = poll_source(session, client_for(responder(body=two)), second_source)
+
+    assert first.stored == 1
+    assert second.stored == 0, "the second feed's copy is the same article"
+    with session_scope(factory) as session:
+        item = session.scalars(select(Item)).one()
+    assert item.canonical_url == "https://example.com/story"
+    assert item.url == "https://example.com/story?utm_source=feed-a", (
+        "the original link is kept for the reader to click"
+    )

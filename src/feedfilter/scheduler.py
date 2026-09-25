@@ -20,6 +20,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy.orm import Session, sessionmaker
 
+from .classify import classify_pending, pending
 from .db import session_scope
 from .fetcher import FetchOutcome, poll_all
 from .models import utcnow
@@ -40,6 +41,10 @@ class PollReport:
     merged: int = 0
     failed: int = 0
     pruned: int = 0
+    classified: int = 0
+    unclassified: int = 0
+    #: Still waiting after this cycle's limit was reached.
+    backlog: int = 0
     outcomes: list[FetchOutcome] = field(default_factory=list)
 
     @property
@@ -47,21 +52,33 @@ class PollReport:
         return (
             f"{self.sources} sources in {self.seconds:.1f}s: "
             f"{self.stored} new, {self.merged} merged, {self.failed} failed, "
-            f"{self.pruned} pruned"
+            f"{self.classified} classified, {self.pruned} pruned"
+            + (f", {self.backlog} still waiting" if self.backlog else "")
         )
 
 
-def run_cycle(session: Session, settings: Settings | None = None) -> PollReport:
-    """One ingestion cycle: fetch everything, then prune.
+def run_cycle(
+    session: Session, settings: Settings | None = None, *, client: object | None = None
+) -> PollReport:
+    """One cycle: fetch everything, classify what is new, then prune.
 
-    Pruning goes last so an item fetched in this same cycle is never a candidate, and so
-    a failed fetch does not stop retention from running.
+    Classification comes after fetching so this cycle's items are judged in this cycle
+    rather than waiting half an hour. Pruning goes last so an item fetched moments ago is
+    never a candidate, and so neither a failed fetch nor a model that is down stops
+    retention from running.
     """
     settings = settings or Settings()
     started = utcnow()
     clock = datetime.now().timestamp()
 
     outcomes = poll_all(session)
+    verdicts = classify_pending(
+        session,
+        settings=settings,
+        limit=settings.classify_max_per_cycle,
+        # Injected by tests; in production the pipeline builds its own.
+        client=client,
+    )
     pruned = prune_expired(session, settings)
 
     report = PollReport(
@@ -72,6 +89,9 @@ def run_cycle(session: Session, settings: Settings | None = None) -> PollReport:
         merged=sum(outcome.merged for outcome in outcomes),
         failed=sum(1 for outcome in outcomes if not outcome.ok),
         pruned=pruned,
+        classified=verdicts.classified,
+        unclassified=verdicts.failed,
+        backlog=len(pending(session)),
         outcomes=outcomes,
     )
     log.info("poll: %s", report.summary)

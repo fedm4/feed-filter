@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ t('sources.title') }} · {{ t('app.name') }}{% endblock %}
+
+{% block content %}
+<h2>{{ t('sources.title') }}</h2>
+<p><small>{{ t('sources.count', enabled=enabled, total=total) }}</small></p>
+
+{% for topic, sources in grouped.items() %}
+  <article>
+    <header><strong>{{ tl('topic', topic) }}</strong></header>
+    {% for source in sources %}
+      <div class="source-row">
+        <form method="post" action="/sources/toggle">
+          <input type="hidden" name="source_id" value="{{ source.id }}">
+          <button type="submit" class="outline" title="{{ t('sources.toggle') }}">
+            {{ '☑' if source.enabled else '☐' }}
+          </button>
+        </form>
+        <span class="grow">
+          {{ source.name }}
+          <small>
+            {% if source.consecutive_failures >= dead_after %}
+              <span class="source-dead">{{ t('sources.dead', count=source.consecutive_failures) }}</span>
+            {% elif not source.enabled %}
+              {{ t('sources.disabled') }}
+            {% endif %}
+          </small>
+        </span>
+      </div>
+    {% endfor %}
+  </article>
+{% endfor %}
+
+<article>
+  <header><strong>{{ t('sources.add') }}</strong></header>
+  <form method="post" action="/sources/add" class="grid">
+    <input type="url" name="url" placeholder="{{ t('sources.add_url') }}" required>
+    <input type="text" name="name" placeholder="{{ t('sources.add_name') }}">
+    <button type="submit">{{ t('sources.add_button') }}</button>
+  </form>
+</article>
+
+<article>
+  <header><strong>{{ t('sources.import_opml') }}</strong></header>
+  <form method="post" action="/sources/import" enctype="multipart/form-data" class="grid">
+    <input type="file" name="file" accept=".opml,.xml,text/xml,application/xml" required>
+    <button type="submit">{{ t('sources.import_button') }}</button>
+  </form>
+</article>
+{% endblock %}

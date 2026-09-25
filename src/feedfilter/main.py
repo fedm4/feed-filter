@@ -1,12 +1,18 @@
 """Application factory and top-level routes."""
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .db import create_db_engine, create_session_factory, init_schema
+from .catalog import sync_catalog
+from .db import create_db_engine, create_session_factory, init_schema, session_scope
+from .routes import admin
+from .scheduler import PollRunner, create_scheduler
 from .settings import Settings
+
+log = logging.getLogger(__name__)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -17,6 +23,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     """
     settings = settings or Settings()
     engine = create_db_engine(settings)
+    session_factory = create_session_factory(engine)
+    poll_runner = PollRunner(session_factory, settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -24,13 +32,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # database and no manual step, while importing this module -- which every test
         # does -- must not touch the disk.
         init_schema(engine)
-        yield
-        engine.dispose()
+        # The catalogue is the authority on which feeds exist, so it is applied on every
+        # boot rather than once at install. Without this the sources table stays empty and
+        # a scheduled poll fetches nothing -- quietly, which is the worst way to fail.
+        with session_scope(session_factory) as session:
+            report = sync_catalog(session, settings=settings)
+        log.info(
+            "catalog: %d added, %d updated, %d unchanged",
+            report.added,
+            report.updated,
+            report.unchanged,
+        )
+
+        scheduler = create_scheduler(poll_runner, settings)
+        scheduler.start()
+        app.state.scheduler = scheduler
+        try:
+            yield
+        finally:
+            # wait=True so a cycle in flight finishes its transaction rather than being
+            # abandoned halfway through inserting a feed's items.
+            scheduler.shutdown(wait=True)
+            engine.dispose()
 
     app = FastAPI(title="feed-filter", lifespan=lifespan)
     app.state.settings = settings
     app.state.engine = engine
-    app.state.session_factory = create_session_factory(engine)
+    app.state.session_factory = session_factory
+    app.state.poll_runner = poll_runner
+    app.include_router(admin.router)
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:

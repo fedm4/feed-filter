@@ -1,0 +1,59 @@
+# Shipped defaults for the tuning that is not an environment variable.
+#
+# Copy to data/config.yaml (or FF_CONFIG_PATH) to change any of it. Unlike the source
+# catalogue, a missing copy is not an error: these are defaults meant to work as they are,
+# not a curation decision only you can make.
+#
+# The keys here -- irrelevant, news, opinion -- are stable identifiers and must not change:
+# they are what gets stored in the database and what the UI translates for display. The
+# text beside them is what the model actually reads, and may be rewritten in any language.
+#
+# That text is the main tuning knob until a fine-tuned checkpoint exists. Measured in #5,
+# sharpening the sensationalism wording moved a tabloid headline from 1.26 to 1.97 on a
+# three-point scale -- and dragged a sober cable from 0.92 to 1.46 along with it. Expect
+# to change both sides when you change one.
+
+# Free text, dropped into the relevance question. Say what you want to read about, and
+# just as usefully what you do not.
+interests: |
+  Software engineering, programming languages, databases and systems work.
+  AI and machine learning research, especially open models and how they are evaluated.
+  Economics and macroeconomic policy, with an interest in Argentina and Spain.
+  Science reporting that explains a result rather than announcing a breakthrough.
+  Not interested in: consumer gadget launches, celebrity news, sports results,
+  cryptocurrency price movements, or daily exchange-rate quotes.
+
+# The buckets an item can be filed under. Identifier on the left, what it means on the
+# right. Add or remove freely -- this list is a preference, not a schema.
+topics:
+  technology: software, hardware and infrastructure
+  ai: machine learning research and models
+  economy: markets, monetary policy and business
+  politics: government, elections and legislation
+  science: research findings outside computing
+  culture: books, film, music, art and society
+  other: none of the above
+
+criteria:
+  # Short phrases, not sentences. Measured on 2026-09-25: long multi-clause descriptions
+  # inverted the ranking outright -- a sober Postgres release note scored 1.63 while a
+  # Spanish tabloid headline scored 0.22. The same pair with short criteria scored 0.89
+  # and 1.57, the right way round. Keep these terse.
+  relevance:
+    irrelevant: nothing to do with my interests
+    marginal: touches an interest in passing
+    interesting: squarely within an interest
+    essential: important enough to read today
+
+  sensationalism:
+    factual: sober factual reporting
+    slanted: mildly slanted
+    clickbait: clickbait
+    tabloid: tabloid outrage
+
+  # A choice, not a ladder: exactly one of these, whichever fits best.
+  content_type:
+    news: a factual report of something that happened
+    analysis: explains causes, consequences or context
+    opinion: argues a position the author holds
+    promotion: sells a product, service or event

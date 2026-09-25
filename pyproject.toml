@@ -11,6 +11,7 @@ dependencies = [
     "pyyaml>=6.0.1",
     "rapidfuzz>=3.14.6",
     "sqlalchemy>=2.0.54",
+    "trafilatura>=2.2.0",
     "uvicorn[standard]",
 ]
 

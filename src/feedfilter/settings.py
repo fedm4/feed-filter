@@ -60,6 +60,12 @@ class Settings(BaseSettings):
     laya_timeout_s: int = Field(default=60, gt=0)
 
     poll_minutes: int = Field(default=30, gt=0)
+    # Sent to every feed we poll. Names the software, not the person running it:
+    # a contact URL here would put one operator's identity in 59 servers' logs, and
+    # nothing about a personal reader fetching public RSS requires that. Add one if a
+    # site ever asks to be able to reach you. Do not put a browser string here -- being
+    # unidentified is fine, being disguised is not.
+    user_agent: str = "feed-filter/0.1"
     fetch_full_text: bool = False
     retention_days: int = Field(default=30, gt=0)
 

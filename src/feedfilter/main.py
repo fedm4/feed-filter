@@ -5,12 +5,14 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from .catalog import sync_catalog
 from .db import create_db_engine, create_session_factory, init_schema, session_scope
-from .routes import admin
+from .routes import admin, feed
 from .scheduler import PollRunner, create_scheduler
 from .settings import Settings
+from .templating import STATIC_DIR, build_templates
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +62,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = engine
     app.state.session_factory = session_factory
     app.state.poll_runner = poll_runner
+    # Built once: it validates FF_UI_LANG, so an unknown language fails here rather than
+    # on the first page someone opens.
+    app.state.templates = build_templates(settings)
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    app.include_router(feed.router)
     app.include_router(admin.router)
 
     @app.get("/healthz")

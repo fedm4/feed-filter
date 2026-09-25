@@ -1,0 +1,55 @@
+/* Small additions on top of Pico. Everything here is layout or emphasis; no copy. */
+
+.item { margin-bottom: 1.25rem; }
+.item h3 { margin: 0.3rem 0 0.2rem; font-size: 1.05rem; line-height: 1.35; }
+.item h3 a { text-decoration: none; }
+.item .meta, .item .summary { margin: 0.2rem 0; }
+.item .summary { color: var(--pico-muted-color); }
+.item[hidden] { display: none; }
+
+/* Collapsed by FF_OPINION_POLICY: still present, still badged, just folded away. The
+   badge is never hidden -- that is the one rule this feature has. */
+.item.collapsed h3 { font-size: 0.95rem; }
+.item.collapsed .summary,
+.item.collapsed .feedback,
+.item.collapsed .meta { display: none; }
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--pico-secondary-background);
+  color: var(--pico-secondary-inverse);
+}
+.badge-opinion { background: #6d4aff; color: #fff; }
+.badge-promotion { background: #c2410c; color: #fff; }
+.badge-analysis { background: #0e7490; color: #fff; }
+.badge-news { background: #15803d; color: #fff; }
+.badge-unclassified { background: var(--pico-muted-border-color); color: var(--pico-muted-color); }
+.badge-topic { background: transparent; color: var(--pico-muted-color); border: 1px solid var(--pico-muted-border-color); }
+
+.filters { margin-bottom: 1rem; }
+.filters fieldset { margin-bottom: 0.25rem; }
+.filters p { display: flex; gap: 0.75rem; align-items: center; margin: 0; }
+.filters button { width: auto; padding: 0.25rem 0.75rem; font-size: 0.8rem; margin: 0; }
+
+.labels-progress { margin: 0 0 1rem; }
+
+.feedback { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding: 0.5rem 0 0; }
+.feedback-group { display: inline-flex; gap: 0.25rem; align-items: center; }
+.feedback-button {
+  width: auto; margin: 0; padding: 0.1rem 0.4rem;
+  background: transparent; border: 1px solid var(--pico-muted-border-color);
+  font-size: 0.85rem; line-height: 1.2;
+}
+.feedback-button[aria-pressed="true"] { border-color: var(--pico-primary); }
+.saved { color: var(--pico-primary); }
+
+.flash { background: var(--pico-primary-background); color: var(--pico-primary-inverse); }
+
+.source-row { display: flex; gap: 0.75rem; align-items: center; padding: 0.35rem 0; }
+.source-row .grow { flex: 1; }
+.source-dead { color: #c2410c; }

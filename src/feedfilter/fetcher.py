@@ -25,6 +25,8 @@ from sqlalchemy.orm import Session
 
 from .canonical import canonicalize, url_hash
 from .dedup import find_duplicate, record_alias
+from .extract import enabled as full_text_enabled
+from .extract import fetch_body
 from .models import Item, Source
 from .settings import Settings
 
@@ -122,6 +124,7 @@ def store_entries(
     source: Source,
     entries: Sequence[ParsedEntry],
     *,
+    client: httpx.Client | None = None,
     settings: Settings | None = None,
 ) -> tuple[int, int]:
     """Insert entries not already stored. Returns (stored, merged).
@@ -137,6 +140,7 @@ def store_entries(
     hashes = {url_hash(entry.url): entry for entry in entries}
     if not hashes:
         return 0, 0
+    want_body = client is not None and full_text_enabled(settings)
 
     known = set(session.scalars(select(Item.url_hash).where(Item.url_hash.in_(hashes))).all())
     stored = merged = 0
@@ -171,6 +175,9 @@ def store_entries(
                 url_hash=digest,
                 title=entry.title,
                 summary=entry.summary,
+                # Only when asked. With the flag off this costs no extra request at all,
+                # which is the point: it would otherwise be one page fetch per article.
+                body=fetch_body(client, entry.url) if want_body else None,
                 published_at=entry.published_at,
             )
         )
@@ -213,7 +220,7 @@ def poll_source(session: Session, client: httpx.Client, source: Source) -> Fetch
         log.warning("%s: %s, %d in a row", source.name, detail, source.consecutive_failures)
         return FetchOutcome(source.name, Status.FAILED, detail=detail)
 
-    stored, merged = store_entries(session, source, entries)
+    stored, merged = store_entries(session, source, entries, client=client)
 
     # Only now: validators are recorded once the body they describe has been stored, so
     # a crash between the two costs a re-fetch rather than a silently skipped update.

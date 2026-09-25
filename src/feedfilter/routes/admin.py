@@ -27,6 +27,9 @@ def poll_now(request: Request) -> JSONResponse:
             "stored": report.stored,
             "merged": report.merged,
             "failed": report.failed,
+            "classified": report.classified,
+            "unclassified": report.unclassified,
+            "backlog": report.backlog,
             "pruned": report.pruned,
             "seconds": round(report.seconds, 1),
         }

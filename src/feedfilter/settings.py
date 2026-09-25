@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     laya_timeout_s: int = Field(default=60, gt=0)
 
     poll_minutes: int = Field(default=30, gt=0)
+    # How many items one cycle may classify. Measured at about 1.3s per item with four
+    # questions, so an unbounded first run over a full catalogue would spend hours
+    # holding the poll lock and fetch nothing meanwhile. The backlog drains over the
+    # following cycles instead, oldest first.
+    classify_max_per_cycle: int = Field(default=200, gt=0)
     # Headline similarity, 0-100, above which two outlets are treated as carrying the
     # same story. 90 was measured, not chosen: over 815 real AR and ES headlines every
     # cross-outlet pair at 90 or above was a genuine duplicate, while 82-85 already held

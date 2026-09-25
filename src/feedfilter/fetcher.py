@@ -11,7 +11,6 @@ has been dead for a week is visible instead of merely quiet.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -24,6 +23,7 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .canonical import canonicalize, url_hash
 from .models import Item, Source
 from .settings import Settings
 
@@ -57,17 +57,6 @@ class FetchOutcome:
     @property
     def ok(self) -> bool:
         return self.status is not Status.FAILED
-
-
-def url_hash(url: str) -> str:
-    """The dedup key: a hash, because SQLite indexes 64 fixed characters far more
-    happily than a 2000-character column.
-
-    D4 replaces the input with the canonicalised URL. Until then this hashes the link as
-    the feed gave it, which catches a feed republishing the same entry but not the same
-    article arriving from two feeds under different tracking parameters.
-    """
-    return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
 
 def _published(entry: Any) -> datetime | None:
@@ -143,9 +132,11 @@ def store_entries(session: Session, source: Source, entries: Sequence[ParsedEntr
         session.add(
             Item(
                 source_id=source.id,
+                # Both are kept: the canonical form is what dedup compares, the original
+                # is what a reader clicks. A publisher's tracking parameters sometimes
+                # matter to them even when they say nothing about which article it is.
                 url=entry.url,
-                # D4 canonicalises; until then the link stands for itself.
-                canonical_url=entry.url,
+                canonical_url=canonicalize(entry.url),
                 url_hash=digest,
                 title=entry.title,
                 summary=entry.summary,

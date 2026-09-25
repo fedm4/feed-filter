@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # How far back to look for the same story. A cable is republished within hours, so
     # a wider window only adds candidates that are coincidence.
     dedup_window_hours: int = Field(default=48, gt=0)
+    # Headlines shorter than this are never fuzzy-matched. A short title carries too
+    # few distinguishing words for any similarity score to mean anything: "Business"
+    # scored 100 against "Premium seats are coming to ChatGPT Business", and
+    # "Introducing Lev" 81 against "Introducing Codex". Every false positive found in a
+    # real run was under 35 characters; every genuine duplicate was over 42.
+    dedup_min_title_chars: int = Field(default=40, ge=0)
     # Sent to every feed we poll. Names the software, not the person running it:
     # a contact URL here would put one operator's identity in 59 servers' logs, and
     # nothing about a personal reader fetching public RSS requires that. Add one if a

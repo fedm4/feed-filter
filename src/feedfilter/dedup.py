@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from rapidfuzz import fuzz, process
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .models import Item, ItemAlias, utcnow
@@ -27,7 +27,9 @@ class Match:
     score: float
 
 
-def candidates(session: Session, *, source_id: int, since: datetime) -> list[Item]:
+def candidates(
+    session: Session, *, source_id: int, since: datetime, min_chars: int = 0
+) -> list[Item]:
     """Items another source stored recently enough to still be the same news cycle.
 
     Same-source items are excluded, and that exclusion is not an optimisation -- it is
@@ -40,7 +42,13 @@ def candidates(session: Session, *, source_id: int, since: datetime) -> list[Ite
     anyway.
     """
     return list(
-        session.scalars(select(Item).where(Item.source_id != source_id, Item.fetched_at >= since))
+        session.scalars(
+            select(Item).where(
+                Item.source_id != source_id,
+                Item.fetched_at >= since,
+                func.length(Item.title) >= min_chars,
+            )
+        )
     )
 
 
@@ -58,11 +66,22 @@ def find_duplicate(
     attaches to the one it actually resembles most.
     """
     settings = settings or Settings()
-    if not title.strip():
+    title = title.strip()
+    # Too short to compare. token_set_ratio scores 100 whenever one title's words are a
+    # subset of the other's, so "Business" matched "Premium seats are coming to ChatGPT
+    # Business"; plain ratio has the same problem from shared boilerplate, scoring
+    # "Introducing Lev" at 81 against "Introducing Codex". No scorer fixes this, because
+    # a three-word headline genuinely does not carry enough to tell two stories apart.
+    if len(title) < settings.dedup_min_title_chars:
         return None
 
     since = (now or utcnow()) - timedelta(hours=settings.dedup_window_hours)
-    pool = candidates(session, source_id=source_id, since=since)
+    pool = candidates(
+        session,
+        source_id=source_id,
+        since=since,
+        min_chars=settings.dedup_min_title_chars,
+    )
     if not pool:
         return None
 

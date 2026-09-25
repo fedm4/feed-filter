@@ -22,6 +22,24 @@ def isolate_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
+def app_env(tmp_path, monkeypatch):
+    """Point a real app at a database and a catalogue of its own.
+
+    Both matter. Without FF_CATALOG_PATH the app boots against whatever catalogue happens
+    to sit in ./data on the machine running the tests -- which passes on a developer's
+    machine and fails in CI, where that file does not exist.
+    """
+    catalog = tmp_path / "catalog.yaml"
+    catalog.write_text(
+        "sources:\n  - name: Seeded\n    url: https://seeded.example/feed\n    lang: en\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("FF_DB_PATH", str(tmp_path / "ff.db"))
+    monkeypatch.setenv("FF_CATALOG_PATH", str(catalog))
+    return catalog
+
+
+@pytest.fixture
 def factory():
     """A session factory over an empty in-memory database."""
     engine = create_db_engine(path=":memory:")

@@ -13,7 +13,7 @@ def test_healthz_reports_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_boot_creates_a_usable_database(tmp_path, monkeypatch) -> None:
+def test_boot_creates_a_usable_database(tmp_path, monkeypatch, app_env) -> None:
     """A fresh deployment should come up with no manual step: no mkdir, no create table."""
     target = tmp_path / "does" / "not" / "exist" / "feedfilter.db"
     monkeypatch.setenv("FF_DB_PATH", str(target))

@@ -224,3 +224,57 @@ def test_aliases_go_when_their_item_goes(factory) -> None:
 
     with session_scope(factory) as session:
         assert session.scalars(select(ItemAlias)).all() == []
+
+
+# Found by running the real catalogue, not by imagining what might go wrong. Every one of
+# these was actually merged before the minimum length existed.
+SHORT_TITLE_TRAPS = [
+    # token_set_ratio scores 100 when one title's words are a subset of the other's.
+    ("Business", "Premium seats are coming to ChatGPT Business"),
+    ("AI and efficiency", "How does programming language affect token efficiency and correctness?"),
+    (
+        "Proximal Policy Optimization (PPO)",
+        "Transductive Off-policy Proximal Policy Optimization",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ("short", "other"), SHORT_TITLE_TRAPS, ids=[t[0][:30] for t in SHORT_TITLE_TRAPS]
+)
+def test_a_short_title_is_never_matched(factory, short, other) -> None:
+    """These scored high and are different articles; no threshold separates them.
+
+    A three-word headline does not carry enough to tell two stories apart, so the fix is
+    to decline the comparison rather than to tune the score.
+    """
+    assert fuzz.token_set_ratio(short, other) >= THRESHOLD, "it really does score high"
+
+    with session_scope(factory) as session:
+        first = make_source(session)
+        make_item(session, first, title=other)
+        second = make_source(session)
+
+        assert find_duplicate(session, source_id=second.id, title=short) is None
+
+
+def test_a_short_stored_title_is_not_matched_either(factory) -> None:
+    """The gate has to apply to both sides, or the same merge happens in reverse."""
+    with session_scope(factory) as session:
+        first = make_source(session)
+        make_item(session, first, title="Business")
+        second = make_source(session)
+
+        found = find_duplicate(
+            session, source_id=second.id, title="Premium seats are coming to ChatGPT Business"
+        )
+        assert found is None
+
+
+def test_every_real_duplicate_still_clears_the_length_gate() -> None:
+    """The gate must not cost any of the duplicates it was not aimed at."""
+    minimum = Settings().dedup_min_title_chars
+
+    for left, right in DUPLICATES:
+        assert len(left) >= minimum, left
+        assert len(right) >= minimum, right

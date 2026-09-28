@@ -83,18 +83,22 @@ def test_only_items_without_verdicts_are_pending(factory) -> None:
         assert [item.title for item in pending(session)] == ["Waiting"]
 
 
-def test_pending_drains_oldest_first(factory) -> None:
-    """So a backlog leaves in the order it arrived, rather than newest-first forever."""
+def test_pending_drains_newest_first(factory) -> None:
+    """The feed is read newest-first, so that is the only useful order to classify in.
+
+    Oldest-first looked fairer and was useless: with any backlog, the items on screen
+    were exactly the unjudged ones, so the page showed no scores and no feedback buttons.
+    """
     from datetime import timedelta
 
     from feedfilter.models import utcnow
 
     with session_scope(factory) as session:
         source = make_source(session)
-        make_item(session, source, title="New", fetched_at=utcnow())
         make_item(session, source, title="Old", fetched_at=utcnow() - timedelta(days=2))
+        make_item(session, source, title="New", fetched_at=utcnow())
 
-        assert [item.title for item in pending(session)] == ["Old", "New"]
+        assert [item.title for item in pending(session)] == ["New", "Old"]
 
 
 # ---------------------------------------------------------------------------- what Laya sees

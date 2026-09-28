@@ -12,6 +12,7 @@ reordered.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -19,7 +20,7 @@ from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from .config_file import Config, load_config
-from .laya_client import Answer, Decision, LayaClient, LayaError
+from .laya_client import Answer, Decision, LayaClient, LayaRejected, LayaUnavailable
 from .models import Item, Verdict
 from .questions import LADDERS, build_questions, rung_label
 from .settings import Settings
@@ -32,10 +33,12 @@ class ClassifyReport:
     classified: int = 0
     failed: int = 0
     verdicts: int = 0
+    aborted: bool = False
 
     @property
     def summary(self) -> str:
-        return f"{self.classified} classified, {self.failed} failed, {self.verdicts} verdicts"
+        line = f"{self.classified} classified, {self.failed} failed, {self.verdicts} verdicts"
+        return f"{line} (aborted: Laya unreachable)" if self.aborted else line
 
 
 def pending(session: Session, limit: int | None = None) -> list[Item]:
@@ -103,26 +106,75 @@ def store_verdicts(session: Session, item: Item, decision: Decision) -> int:
     return len(decision.answers)
 
 
+def predict_with_retry(
+    client: LayaClient,
+    item: Item,
+    questions: dict[str, dict[str, Any]],
+    *,
+    retries: int,
+    backoff_s: float,
+) -> Decision:
+    """One item, retried through transient failures with exponential backoff.
+
+    Only LayaUnavailable is retried. A LayaRejected is a 4xx: the request is wrong, and
+    sending the same one again more slowly does not make it right.
+    """
+    for attempt in range(retries):
+        try:
+            return client.predict(item_state(item), questions)
+        except LayaUnavailable:
+            if attempt == retries - 1:
+                raise
+            time.sleep(backoff_s * 2**attempt)
+    raise AssertionError("unreachable: the loop either returns or raises")
+
+
 def classify_items(
     session: Session,
     items: list[Item],
     *,
     client: LayaClient,
     questions: dict[str, dict[str, Any]],
+    retries: int = 3,
+    backoff_s: float = 1.0,
 ) -> ClassifyReport:
     """Classify each item and store its verdicts.
 
-    A failure on one item is counted and the rest continue: the item simply stays pending
-    and is picked up next cycle, which is the right answer for a model that is briefly
-    down. E3 adds backoff on top of this.
+    Laya runs on the host, outside this app's lifecycle, so it will be down sometimes.
+    That has to be a delay, never data loss: an item that cannot be classified is simply
+    left without a verdict, which is what makes it pending again on the next cycle.
+
+    When retries run out the run stops, but only if nothing has been classified yet.
+    That is the difference between the two failures that look identical from here: if no
+    item has gone through, Laya is down and walking the rest of the queue only produces
+    one warning per item and delays the recovery everyone is waiting for. If something
+    has already succeeded, Laya is up and this one item is the problem, so it is counted
+    and skipped like any other bad row.
+
+    ponytail: an item that always fails and happens to sort first still halts each cycle.
+    Track consecutive failures instead if that ever shows up in the logs.
     """
     classified = failed = verdicts = 0
-    for item in items:
+    for position, item in enumerate(items):
         try:
-            decision = client.predict(item_state(item), questions)
-        except LayaError as exc:
+            decision = predict_with_retry(
+                client, item, questions, retries=retries, backoff_s=backoff_s
+            )
+        except LayaUnavailable as exc:
+            if classified:
+                failed += 1
+                log.warning("classify: item %d failed, skipping it (%s)", item.id, exc)
+                continue
+            log.warning(
+                "classify: Laya unreachable after %d attempts, %d items left pending (%s)",
+                retries,
+                len(items) - position,
+                exc,
+            )
+            return ClassifyReport(classified, failed, verdicts, aborted=True)
+        except LayaRejected as exc:
             failed += 1
-            log.warning("classify: item %d failed (%s)", item.id, type(exc).__name__)
+            log.warning("classify: item %d rejected, skipping it (%s)", item.id, exc)
             continue
         verdicts += store_verdicts(session, item, decision)
         classified += 1
@@ -147,7 +199,14 @@ def classify_pending(
     owned = client is None
     client = client or LayaClient(settings)
     try:
-        report = classify_items(session, items, client=client, questions=questions)
+        report = classify_items(
+            session,
+            items,
+            client=client,
+            questions=questions,
+            retries=settings.laya_retries,
+            backoff_s=settings.laya_retry_backoff_s,
+        )
     finally:
         if owned:
             client.close()

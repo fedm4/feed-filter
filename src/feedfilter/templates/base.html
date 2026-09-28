@@ -1,0 +1,30 @@
+{# Every visible string comes from the F0 catalogue. No literal copy in here. #}
+<!doctype html>
+<html lang="{{ lang }}" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ t('app.name') }}{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+</head>
+<body>
+  <header class="container">
+    <nav>
+      <ul><li><strong>{{ t('app.name') }}</strong></li></ul>
+      <ul>
+        <li><a href="/" {% if page == 'feed' %}aria-current="page"{% endif %}>{{ t('nav.feed') }}</a></li>
+        <li><a href="/sources" {% if page == 'sources' %}aria-current="page"{% endif %}>{{ t('nav.sources') }}</a></li>
+        <li><a href="/config" {% if page == 'config' %}aria-current="page"{% endif %}>{{ t('nav.config') }}</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% if flash %}<article class="flash">{{ flash }}</article>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

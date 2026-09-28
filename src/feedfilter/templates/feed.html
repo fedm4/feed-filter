@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ t('feed.title') }} · {{ t('app.name') }}{% endblock %}
+
+{% block content %}
+<form id="filters" class="filters">
+  <fieldset class="grid">
+    <label>
+      {{ t('filters.min_relevance') }}
+      <input type="range" id="min-relevance" min="0" max="3" step="0.1" value="{{ min_relevance }}">
+      <small data-readout="min-relevance"></small>
+    </label>
+    <label>
+      {{ t('filters.max_sensationalism') }}
+      <input type="range" id="max-sensationalism" min="0" max="3" step="0.1" value="{{ max_sensationalism }}">
+      <small data-readout="max-sensationalism"></small>
+    </label>
+    <label>
+      <input type="checkbox" id="hide-promotion" role="switch" {% if hide_promotion %}checked{% endif %}>
+      {{ t('filters.hide_promotion') }}
+    </label>
+  </fieldset>
+  <p>
+    <small id="showing"></small>
+    <button type="button" id="reset" class="secondary outline">{{ t('filters.reset') }}</button>
+    <button type="button" id="poll" class="outline">{{ t('feed.poll_now') }}</button>
+  </p>
+</form>
+
+{% if label_count is not none %}
+<p class="labels-progress">
+  <small>{{ t('feedback.progress', count=label_count, target=label_target) }} — {{ t('feedback.why') }}</small>
+</p>
+{% endif %}
+
+{% if not views %}
+  <article>{{ t('feed.empty') }}</article>
+{% else %}
+  <p id="all-filtered" hidden>{{ t('feed.empty_filtered') }}</p>
+  {% for view in views %}
+    {# The scores ride along as data attributes so the sliders can filter without a
+       round trip and without reclassifying anything. #}
+    <article class="item"
+             data-item="{{ view.item.id }}"
+             data-relevance="{{ '%.3f'|format(view.scores.get('relevance', 0.0)) }}"
+             data-sensationalism="{{ '%.3f'|format(view.scores.get('sensationalism', 0.0)) }}"
+             data-content-type="{{ view.content_type or '' }}"
+             data-classified="{{ 'yes' if view.classified else 'no' }}">
+      <header>
+        {% if view.content_type %}
+          {# Opinion and promotion are always badged. FF_OPINION_POLICY may additionally
+             collapse or hide them, but the badge itself is never conditional. #}
+          <span class="badge badge-{{ view.content_type }}">
+            {{ badge_icon(view.content_type) }} {{ tl('content_type', view.content_type) }}
+          </span>
+        {% else %}
+          <span class="badge badge-unclassified">{{ t('feed.unclassified') }}</span>
+        {% endif %}
+        {% if view.labels.get('topic') %}
+          <span class="badge badge-topic">{{ tl('topic', view.labels['topic']) }}</span>
+        {% endif %}
+      </header>
+
+      <h3><a href="{{ view.item.url }}" target="_blank" rel="noopener noreferrer">{{ view.item.title }}</a></h3>
+
+      <p class="meta">
+        <small>
+          {{ view.item.source.name }} · {{ view.age(translator) }}
+          {% if view.labels.get('relevance') %}
+            · {{ tl('relevance', view.labels['relevance']) }}
+            ({{ '%.1f'|format(view.scores.get('relevance', 0.0)) }})
+          {% endif %}
+          {% if view.labels.get('sensationalism') %}
+            · {{ tl('sensationalism', view.labels['sensationalism']) }}
+            ({{ '%.1f'|format(view.scores.get('sensationalism', 0.0)) }})
+          {% endif %}
+        </small>
+      </p>
+
+      {% if view.aliases %}
+        <p><small>{{ t('feed.also_in') }}: {{ view.aliases|join(', ') }}</small></p>
+      {% endif %}
+
+      {% if view.item.summary %}
+        <p class="summary">{{ view.item.summary|striptags|truncate(280) }}</p>
+      {% endif %}
+
+      {% if view.classified %}
+        <footer class="feedback">
+          <small>{{ t('feedback.title') }}</small>
+          {% for dimension in ('relevance', 'sensationalism', 'content_type') %}
+            <span class="feedback-group" data-dimension="{{ dimension }}">
+              <small>{{ tl(dimension, view.labels[dimension]) if view.labels.get(dimension) else dimension }}</small>
+              <button type="button" class="feedback-button" data-verdict="agree"
+                      data-item="{{ view.item.id }}" data-dimension="{{ dimension }}"
+                      title="{{ t('feedback.agree') }}">👍</button>
+              <button type="button" class="feedback-button" data-verdict="disagree"
+                      data-item="{{ view.item.id }}" data-dimension="{{ dimension }}"
+                      title="{{ t('feedback.disagree') }}">👎</button>
+              {% if dimension in view.labelled %}<small class="saved">✓</small>{% endif %}
+            </span>
+          {% endfor %}
+        </footer>
+      {% endif %}
+    </article>
+  {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.FF = {
+    opinionPolicy: {{ opinion_policy|tojson }},
+    showingTemplate: {{ t('feed.showing', shown='{shown}', total='{total}')|tojson }},
+    savedLabel: {{ t('feedback.saved')|tojson }},
+    pollingLabel: {{ t('feed.polling')|tojson }},
+    pollLabel: {{ t('feed.poll_now')|tojson }},
+    defaults: {
+      minRelevance: {{ min_relevance }},
+      maxSensationalism: {{ max_sensationalism }},
+      hidePromotion: {{ hide_promotion|tojson }}
+    }
+  };
+</script>
+<script src="{{ url_for('static', path='/filters.js') }}"></script>
+{% endblock %}

@@ -318,3 +318,24 @@ def test_the_backlog_is_what_is_still_pending(factory) -> None:
 
     assert report.classified == 2
     assert report.backlog == 3, "the rest wait for the next cycle"
+
+
+def test_a_capped_cycle_classifies_what_the_reader_will_see(factory) -> None:
+    """The regression this order exists to prevent."""
+    from datetime import timedelta
+
+    from feedfilter.models import utcnow
+    from feedfilter.view import feed_items
+
+    with session_scope(factory) as session:
+        source = make_source(session)
+        for age in range(10):
+            make_item(
+                session, source, title=f"Item {age}", fetched_at=utcnow() - timedelta(hours=age)
+            )
+        classify_pending(session, config=CONFIG, client=FakeClient(), limit=3)
+
+    with session_scope(factory) as session:
+        top = feed_items(session)[:3]
+
+    assert all(view.classified for view in top), "the top of the feed must carry verdicts"

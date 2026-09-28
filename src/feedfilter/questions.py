@@ -108,3 +108,16 @@ def rung_label(question: str, index: int | str) -> str:
     if not 0 <= position < len(ladder):
         raise ConfigError(f"{question}: no rung at position {position}")
     return ladder[position]
+
+
+def ladder_score(question: str, distribution: dict[str, float]) -> float:
+    """The expected position on a ladder, from a distribution keyed by identifier.
+
+    Laya returns this as `score`, but a stored Verdict keeps only the distribution -- so
+    that moving a threshold is a read rather than a reclassification. This recovers the
+    number from what was stored.
+    """
+    ladder = LADDERS.get(question)
+    if ladder is None:
+        raise ConfigError(f"{question} is not a ladder")
+    return sum(position * distribution.get(name, 0.0) for position, name in enumerate(ladder))

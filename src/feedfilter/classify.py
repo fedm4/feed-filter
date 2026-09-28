@@ -39,13 +39,20 @@ class ClassifyReport:
 
 
 def pending(session: Session, limit: int | None = None) -> list[Item]:
-    """Items with no verdict yet, oldest first.
+    """Items with no verdict yet, newest first.
 
-    Oldest first so a backlog drains in the order it arrived, and so a persistent failure
-    on one item does not starve everything behind it on the next run.
+    Newest first because that is the order the feed is read in. Draining oldest first
+    seemed fairer and was actually useless: with any backlog at all, the items on screen
+    were precisely the ones still unjudged, so the page showed no scores and no feedback
+    buttons while a thousand week-old items were classified out of sight.
+
+    Old items left unclassified are not a loss. They are below the fold, and retention
+    removes them before anyone scrolls that far.
     """
     statement = (
-        select(Item).where(~exists().where(Verdict.item_id == Item.id)).order_by(Item.fetched_at)
+        select(Item)
+        .where(~exists().where(Verdict.item_id == Item.id))
+        .order_by(Item.fetched_at.desc(), Item.id.desc())
     )
     if limit is not None:
         statement = statement.limit(limit)

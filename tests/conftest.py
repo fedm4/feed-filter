@@ -19,6 +19,9 @@ def isolate_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in list(os.environ):
         if name.startswith("FF_"):
             monkeypatch.delenv(name, raising=False)
+    # And retry without waiting: the backoff is real time, and the suite is not here to
+    # spend it. The delays themselves are asserted in test_classify_resilience.
+    monkeypatch.setenv("FF_LAYA_RETRY_BACKOFF_S", "0")
 
 
 @pytest.fixture

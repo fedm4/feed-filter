@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     laya_model: str = ""
     laya_api_key: str | None = None
     laya_timeout_s: int = Field(default=60, gt=0)
+    # Attempts per item before a run gives up and leaves the rest pending. Laya is either
+    # up or it is not, so this is about riding out a restart, not about persistence.
+    laya_retries: int = Field(default=3, ge=1)
+    laya_retry_backoff_s: float = Field(default=1.0, ge=0)
 
     poll_minutes: int = Field(default=30, gt=0)
     # How many items one cycle may classify. Measured at about 1.3s per item with four
